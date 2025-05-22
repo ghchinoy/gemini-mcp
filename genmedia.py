@@ -46,37 +46,39 @@ Please confirm once both tasks are initiated or completed, providing any relevan
 
 async def run():
     
-    async with stdio_client(veo_stdio) as (read, write):
-        async with stdio_client(veo_stdio) as (veo_read, veo_write):
-            async with ClientSession(veo_read, veo_write) as veo_session:
-                print("Initializing Veo MCP session...")
-                await veo_session.initialize()
-                print("Veo MCP session initialized.")
+    async with stdio_client(veo_stdio) as (veo_read, veo_write):
+        async with ClientSession(veo_read, veo_write) as veo_session:
+            # Initialize the connection between client and server
+            print("Initializing Veo MCP session...")
+            await veo_session.initialize()
+            print("Veo MCP session initialized.")
 
-                async with stdio_client(imagen_stdio) as (read, write):
-                    async with ClientSession(read, write) as imagen_session:
-                        # Initialize the connection between client and server
-                        await imagen_session.initialize()
+            async with stdio_client(imagen_stdio) as (read, write):
+                async with ClientSession(read, write) as imagen_session:
+                    # Initialize the connection between client and server
+                    print("Initializing Imagen MCP session...")
+                    await imagen_session.initialize()
+                    print("Imagen MCP session initialized.")
 
 
-                        # Send request to the model with MCP function declarations
-                        response = await client.aio.models.generate_content(
-                            model="gemini-2.0-flash",
-                            contents=prompt,
-                            config=genai.types.GenerateContentConfig(
-                                temperature=0,
-                                tools=[imagen_session, veo_session],
-                                # do NOT automatically call MCP
-                                # automatic_function_calling=genai.types.AutomaticFunctionCallingConfig(
-                                #     disable=True
-                                # ),
-                                system_instruction=
-                                    [
-                                    """You are a helpful generative media creation assistant. Use your tools to fullfill the tasks."""
-                                    ]
-                            ),
-                        )
-                        print(response.text)
+                    # Send request to the model with MCP function declarations
+                    response = await client.aio.models.generate_content(
+                        model="gemini-2.0-flash",
+                        contents=prompt,
+                        config=genai.types.GenerateContentConfig(
+                            temperature=0,
+                            tools=[imagen_session, veo_session],
+                            # do NOT automatically call MCP
+                            # automatic_function_calling=genai.types.AutomaticFunctionCallingConfig(
+                            #     disable=True
+                            # ),
+                            system_instruction=
+                                [
+                                """You are a helpful generative media creation assistant. Use your tools to fullfill the tasks."""
+                                ]
+                        ),
+                    )
+                    print(response.text)
 
 # Start the asyncio event loop and run the main function
 asyncio.run(run())
